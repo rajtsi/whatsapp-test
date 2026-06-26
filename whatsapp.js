@@ -4,26 +4,25 @@ const qrcode = require("qrcode-terminal");
 
 let isReady = false;
 
-// Only pass executablePath if explicitly set in env
-// Otherwise let Puppeteer use its own downloaded Chrome
-const puppeteerConfig = {
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-    "--single-process",        // important for Render/Railway free tier
-  ],
-};
-
-if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-  puppeteerConfig.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-}
+// Render installs Chrome here via postinstall
+// Fall back to env var if set, otherwise use Render's path
+const executablePath =
+  process.env.PUPPETEER_EXECUTABLE_PATH ||
+  "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome";
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
-  puppeteer: puppeteerConfig,
+  puppeteer: {
+    executablePath,
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu",
+      "--single-process",
+    ],
+  },
 });
 
 client.on("qr", (qr) => {
@@ -32,26 +31,16 @@ client.on("qr", (qr) => {
   console.log("\nWaiting for scan...\n");
 });
 
-client.on("authenticated", () => {
-  console.log("🔐 Authenticated — session saved.");
-});
-
-client.on("ready", () => {
-  isReady = true;
-  console.log("✅ WhatsApp client ready!\n");
-});
-
+client.on("authenticated", () => console.log("🔐 Authenticated — session saved."));
+client.on("ready", () => { isReady = true; console.log("✅ WhatsApp client ready!\n"); });
 client.on("disconnected", (reason) => {
   isReady = false;
   console.warn("⚠️  Disconnected:", reason, "— reconnecting...");
   client.initialize();
 });
-
-client.on("auth_failure", () => {
-  console.error("❌ Auth failed. Delete .wwebjs_auth and restart.");
-  process.exit(1);
-});
+client.on("auth_failure", () => { console.error("❌ Auth failed."); process.exit(1); });
 
 client.isClientReady = () => isReady;
 
 module.exports = client;
+
