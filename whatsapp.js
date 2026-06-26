@@ -1,14 +1,15 @@
+
 require("dotenv").config();
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 
 let isReady = false;
 
-// Render installs Chrome here via postinstall
-// Fall back to env var if set, otherwise use Render's path
+// Use env var if set, otherwise system chromium installed via apt
 const executablePath =
-  process.env.PUPPETEER_EXECUTABLE_PATH ||
-  "/opt/render/.cache/puppeteer/chrome/linux-146.0.7680.31/chrome-linux64/chrome";
+  process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium";
+
+console.log("🔍 Using Chrome at:", executablePath);
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
@@ -43,4 +44,3 @@ client.on("auth_failure", () => { console.error("❌ Auth failed."); process.exi
 client.isClientReady = () => isReady;
 
 module.exports = client;
-
