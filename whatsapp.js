@@ -16,6 +16,7 @@ if (executablePath) {
 
 const puppeteerOptions = {
   headless: true,
+  protocolTimeout: 600000, // 10 minutes timeout to prevent ProtocolError
   args: [
     "--no-sandbox",
     "--disable-setuid-sandbox",
