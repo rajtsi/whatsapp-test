@@ -8,12 +8,7 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(express.json({ limit: "20mb" }));
 
-// Public
-app.get("/health", (req, res) => {
-  res.json({ ok: true, uptime: Math.floor(process.uptime()) + "s", whatsapp: client.isClientReady() });
-});
-
-// API key auth on everything else
+// API key auth on everything
 app.use((req, res, next) => {
   if (!process.env.API_KEY) {
     return res.status(500).json({ ok: false, error: "API_KEY not set on server" });
@@ -22,6 +17,10 @@ app.use((req, res, next) => {
     return res.status(401).json({ ok: false, error: "Unauthorized" });
   }
   next();
+});
+
+app.get("/health", (req, res) => {
+  res.json({ ok: true, uptime: Math.floor(process.uptime()) + "s", whatsapp: client.isClientReady() });
 });
 
 app.use("/", routes);
