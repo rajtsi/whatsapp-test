@@ -1,6 +1,6 @@
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const generateContent = async (prompt, options = {}, maxRetries = 5) => {
+const generateContent = async (prompt, options = {}, maxRetries = 6) => {
   const { useGoogleSearch = false, isJson = false } = options;
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -53,8 +53,11 @@ const generateContent = async (prompt, options = {}, maxRetries = 5) => {
       return textContent;
     } catch (error) {
       if (attempt < maxRetries) {
-        const waitTime = attempt * 5000; // 5s, 10s, 15s...
-        console.warn(`⚠️ Gemini API error on attempt ${attempt}/${maxRetries} (${error.message}). Retrying in ${waitTime/1000}s...`);
+        const waitTimesMinutes = [5, 11, 17, 20, 24];
+        // Fallback to 24 mins if we exceed the array length
+        const delayMins = waitTimesMinutes[attempt - 1] || 24; 
+        const waitTime = delayMins * 60 * 1000;
+        console.warn(`⚠️ Gemini API error on attempt ${attempt}/${maxRetries} (${error.message}). Retrying in ${delayMins} minutes...`);
         await sleep(waitTime);
       } else {
         throw new Error(`Gemini API failed after ${maxRetries} attempts. Last error: ${error.message}`);
