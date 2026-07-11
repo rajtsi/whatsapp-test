@@ -1,0 +1,47 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  ats          String   // e.g. "greenhouse", "lever"
+  board_token  String?
+  career_url   String?
+  enabled      Boolean  @default(true)
+  priority     Int      @default(0)
+  last_checked DateTime?
+  jobs         Job[]
+}
+
+model Job {
+  id              Int      @id @default(autoincrement())
+  hash            String   @unique // SHA256(company + title + location)
+  company_id      Int
+  company         Company  @relation(fields: [company_id], references: [id])
+  title           String
+  location        String
+  url             String
+  department      String?
+  employment_type String?
+  experience      String?
+  source          String   // e.g. "api", "whatsapp"
+  ats             String
+  posted          Boolean  @default(false)
+  posted_at       DateTime?
+  created_at      DateTime @default(now())
+}
+
+model Channel {
+  id       Int      @id @default(autoincrement())
+  name     String
+  jid      String   @unique
+  enabled  Boolean  @default(true)
+  language String   @default("en")
+  type     String   // e.g. "whatsapp", "telegram"
+}
