@@ -16,15 +16,12 @@ if (executablePath) {
 
 const puppeteerOptions = {
   headless: true,
-  timeout: 120000, // Increase Puppeteer navigation timeout
+  protocolTimeout: 600000, // 10 minutes timeout to prevent ProtocolError
   args: [
     "--no-sandbox",
     "--disable-setuid-sandbox",
     "--disable-dev-shm-usage",
-    "--disable-gpu",
-    "--disable-software-rasterizer", // Saves CPU on Linux VMs
-    "--disable-extensions",
-    "--mute-audio"
+    "--disable-gpu"
   ],
 };
 
@@ -34,9 +31,7 @@ if (executablePath) {
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: "./.wwebjs_auth" }),
-  puppeteer: puppeteerOptions,
-  authTimeoutMs: 120000, // Wait 2 minutes for slow VMs
-  userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+  puppeteer: puppeteerOptions
 });
 
 

@@ -6,7 +6,8 @@ const allowedRoles = [
 
 const rejectedRoles = [
     "sales", "marketing", "finance", "hr", "legal", 
-    "solutions engineer", "customer success", "account executive"
+    "solutions engineer", "customer success", "account executive",
+    "senior", "sr", "staff", "principal", "lead", "head", "manager", "director", "vp"
 ];
 
 function isTechRole(title = "") {
