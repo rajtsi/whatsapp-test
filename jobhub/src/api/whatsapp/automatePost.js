@@ -12,6 +12,24 @@ function requireReady(req, res, next) {
   next();
 }
 
+async function sendMessageWithRetry(client, to, content, options = {}, maxRetries = 5) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Optional: try fetching the chat first to force it into cache
+      try { await client.getChatById(to); } catch (e) {}
+      
+      return await client.sendMessage(to, content, options);
+    } catch (err) {
+      if (attempt < maxRetries) {
+        console.warn(`⚠️ WhatsApp send error to ${to} (Attempt ${attempt}/${maxRetries}): ${err.message}. Retrying in 15s...`);
+        await new Promise(r => setTimeout(r, 15000)); // wait 15 seconds before retrying
+      } else {
+        throw new Error(`Failed to send message to ${to} after ${maxRetries} attempts. Last error: ${err.message}`);
+      }
+    }
+  }
+}
+
 router.post("/automate-post", requireReady, (req, res) => {
   res.status(202).json({ ok: true, status: "Processing in background" });
 
@@ -50,7 +68,7 @@ router.post("/automate-post", requireReady, (req, res) => {
             if (partText) {
               const finalMsg = [enHeader, partText, enFooter].filter(Boolean).join("\n\n");
               console.log(`📤 Sending English part '${key}'...`);
-              await client.sendMessage(payload.english.channelId, finalMsg);
+              await sendMessageWithRetry(client, payload.english.channelId, finalMsg);
               await new Promise(r => setTimeout(r, 2000));
             }
           }
@@ -58,7 +76,8 @@ router.post("/automate-post", requireReady, (req, res) => {
           console.log("📤 Sending single English message...");
           englishResponseText = content;
           const finalMsg = [enHeader, englishResponseText, enFooter].filter(Boolean).join("\n\n");
-          await client.sendMessage(
+          await sendMessageWithRetry(
+            client,
             payload.english.channelId, 
             imageMedia ? imageMedia : finalMsg,
             imageMedia ? { caption: finalMsg } : {}
@@ -96,7 +115,7 @@ router.post("/automate-post", requireReady, (req, res) => {
             if (partText) {
               const finalMsg = [hiHeader, partText, hiFooter].filter(Boolean).join("\n\n");
               console.log(`📤 Sending Hindi part '${key}'...`);
-              await client.sendMessage(payload.hindi.channelId, finalMsg);
+              await sendMessageWithRetry(client, payload.hindi.channelId, finalMsg);
               await new Promise(r => setTimeout(r, 2000));
             }
           }
@@ -104,7 +123,8 @@ router.post("/automate-post", requireReady, (req, res) => {
           console.log("📤 Sending single Hindi message...");
           hindiResponseText = content;
           const finalMsg = [hiHeader, hindiResponseText, hiFooter].filter(Boolean).join("\n\n");
-          await client.sendMessage(
+          await sendMessageWithRetry(
+            client,
             payload.hindi.channelId,
             imageMedia ? imageMedia : finalMsg,
             imageMedia ? { caption: finalMsg } : {}
